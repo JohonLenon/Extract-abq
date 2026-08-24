@@ -1,4 +1,5 @@
 from numpy import mean
+import matplotlib.pyplot as plt
 from odbAccess import DOUBLE_PRECISION
 
 def get_field_data(value):
@@ -69,3 +70,39 @@ def save_ovalization(name, path, z0, x0, z1, x1, ovalization_index):
         f.write('z0,x0,z1,x1\n')
         for zi0, xi0, zi1, xi1 in zip(z0, x0, z1, x1):
             f.write(f'{zi0:.6e},{xi0:.6e},{zi1:.6e},{xi1:.6e}\n')
+
+def save_figure(fig, i, models, data):
+    if len(models)==1:
+        model = models[0]
+        fig.suptitle(f"Resultado - {model['name']}", fontsize=12, fontweight='bold', y=0.97)
+        fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.13, hspace=0.3, wspace=0.3)
+        if data.get('restante_horas') is not None:
+            tempo = {}
+            if data.get('restante_horas') < 1:
+                tempo['restante_horas'] = [data['restante_horas']*60, 'min']
+            else:
+                tempo['restante_horas'] = [data['restante_horas'], 'h']
+            if data.get('wct_total_horas') < 1:
+                tempo['wct_total_horas'] = [data['wct_total_horas']*60, 'min']
+            else:
+                tempo['wct_total_horas'] = [data['wct_total_horas'], 'h']
+            fig.text(0.5, 0.05, f"Cores: {data['n_cores']} | Progresso: {data['progresso_global']*100:.1f}% | WCT: {tempo['wct_total_horas'][0]:.1f} {tempo['wct_total_horas'][1]} | Restante: {tempo['restante_horas'][0]:.1f} {tempo['restante_horas'][1]}", ha='center', fontsize=9, color='black')
+            fig.savefig(rf"{model['path']}\Resultado - {model['name']} - {data['progresso_global']*100:.0f}% - Frame {model.get('frame', 'indefinido')}.png", dpi=400)
+        else:
+            fig.savefig(rf"{model['path']}\Resultado - {model['name']} - Frame {model.get('frame', 'indefinido')}.png", dpi=400)
+    else:
+        if data.get('restante_horas') is not None:
+            tempo = {}
+            if data.get('restante_horas') < 1:
+                tempo['restante_horas'] = [data['restante_horas']*60, 'min']
+            else:
+                tempo['restante_horas'] = [data['restante_horas'], 'h']
+            if data.get('wct_total_horas') < 1:
+                tempo['wct_total_horas'] = [data['wct_total_horas']*60, 'min']
+            else:
+                tempo['wct_total_horas'] = [data['wct_total_horas'], 'h']
+            fig.text(0.5, 0.06-i*0.02, f"Cores: {data['n_cores']} | Progresso: {data['progresso_global']*100:.1f}% | WCT: {tempo['wct_total_horas'][0]:.1f} {tempo['wct_total_horas'][1]} | Restante: {data['restante_horas']:.1f} {data['restante_horas']}", ha='center', fontsize=9, color='black')
+        save_name = f"Comparação - Modelos { ' e '.join([model['name'].split(' ')[1] for model in models])}"
+        fig.suptitle(save_name, fontsize=12, fontweight='bold', y=0.97)
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.13, hspace=0.3, wspace=0.3)
+        plt.savefig(fr"Comparação de resultados\{save_name}.png", dpi=400, bbox_inches='tight')

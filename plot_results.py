@@ -1,9 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from save_files import save_figure
 from matplotlib.patches import Circle
+from data_utils import load_data, extract_results
+from read_files import read_cpress, read_ho, read_rmc, read_curvatures, read_ovalization
 
 t_sample = None
-t_sample = np.array([0.06])
+t_sample = np.array([0.1])
 t_pressure = 0
 
 def adjust_axis_limits(ax, data, axis='y'):
@@ -23,6 +26,17 @@ def adjust_axis_limits(ax, data, axis='y'):
     if novo_min < lim_min_atual:
         valor = novo_min * 1.15 if novo_min < 0 else novo_min * 0.85
         set_lim(**{low_key: valor})
+
+def perclimits(ax, data, axis='y'):
+    set_lim = ax.set_xlim if axis == 'x' else ax.set_ylim
+    data = np.asarray(data)
+    data = data[np.isfinite(data)]
+    if len(data) == 0:
+        return
+    novo_min = np.percentile(data, 5)
+    novo_max = np.percentile(data, 95)
+    margem = 0.15 * (novo_max - novo_min)
+    set_lim(novo_min - margem, novo_max + margem)
 
 def set_section_limits(ax, x_data, z_data, margin=1.15):
     max_range = max(max(abs(v) for v in x_data), max(abs(v) for v in z_data)) * margin
@@ -108,31 +122,16 @@ def plot_stiff(ax, t, k, m, s, label):
     ax.plot(t, s, linewidth=1.5, color='gray', alpha=0.4)
     ax.plot(t_fit, stiff_fit, linewidth=1.5, label=label)
 
-    adjust_axis_limits(ax, stiff_fit)
-    # y_max_atual = ax.get_ylim()[1]
-    # y_min_atual = ax.get_ylim()[0]
-    # if np.ceil(max(stiff_fit)*100)/100>y_max_atual:
-    #     ax.set_ylim(top=np.ceil(max(stiff_fit)*100)/100*1.15)
-    # if np.ceil(min(stiff_fit)*100)/100<y_min_atual:
-    #     ax.set_ylim(bottom=np.ceil(min(stiff_fit)*100)/100*1.15)
+    perclimits(ax, stiff_fit)
 
     if t_sample is not None:
         sm = np.interp(t_sample, t_fit, stiff_fit)
         ax.plot(t_sample, sm, 'o', markersize=5)
-
-    # ax.set_xlim(0, round(max(t_fit)))
-    # ax.set_ylim(0,max(stiff_fit))
-    # ax.set_xlim(0,max(t_fit))
     ax.legend()
 
 def plot_ho(ax, t, r, label):
-    # y_max_atual = ax.get_ylim()[1]
-    # y_min_atual = ax.get_ylim()[0]
-    # if np.ceil(max(r)*100)/100>y_max_atual:
-    #     ax.set_ylim(top=np.ceil(max(r)*100)/100*1.15)
-    # if np.ceil(min(r)*100)/100<y_min_atual:
-    #     ax.set_ylim(bottom=np.ceil(min(r)*100)/100*1.15)
     adjust_axis_limits(ax, r)
+    # perclimits(ax, r)
     if not hasattr(plot_ho, 'color_index'):
         plot_ho.color_index = 0
     colors = plt.cm.get_cmap('tab10', 10)
@@ -210,3 +209,71 @@ def plot_cpress(data, ax, fig):
 
     ax.grid(True, which='both', alpha=0.3)
     fig.tight_layout()
+
+def plot_figure(fig, axes, models, extract, plot):
+    for i, model in enumerate(models):
+        data = load_data(model)
+        if model['extract']:
+            extract_results(model, data, extract)
+
+        if plot['RMC']:
+            rmc = [r for r in (read_rmc(model['name'], model['path'], end)
+                            for end in data['bc_sets']
+                            ) if r is not None]
+            for ax_name, titles, (t, k, m, _) in zip(['endA', 'endB'], [model['title'] + ' - endA', model['title'] + ' - endB'], rmc):
+                plot_km(axes[ax_name], t, k, m, titles)
+            for label, (t,k,m,s) in zip(['endA', 'endB'], rmc):
+                plot_stiff(axes['stiffness'], t, k, m, s, label)
+            if rmc:
+                plot_tm(axes['moment_time'], *[r[0] for r in rmc], *[r[1] for r in rmc], *[r[2] for r in rmc], model)
+
+        if plot['History']:
+            names = {
+                'lim': 'Limite - 5% ALLIE',
+                'ALLAE': 'Artificial strain energy',
+                'ALLCCDW': 'Contact contraint discontinuity work',
+                'ALLCCE': 'Contact constraint elastic energy',
+                'ALLCCEN': 'Contact constraint elastic normal energy',
+                'ALLCCET': 'Contact constraint elastic tangential energy',
+                'ALLCCSD': 'Contact constraint stabilization dissipation',
+                'ALLCCSDN': 'Contact constraint stabilization normal dissipation',
+                'ALLCCSDT': 'Contact constraint stabilization tangential dissipation',
+                'ALLCD': 'Creep dissipation energy',
+                'ALLDMD': 'Damage dissipation energy',
+                'ALLDTI': 'Dynamic time integration energy',
+                'ALLEE': 'Electrostatic energy',
+                'ALLQB': 'Energy lost to quiet boundaries',
+                'ALLMW': 'External work by mass scaling',
+                'ALLWK': 'External work',
+                'ALLFD': 'Frictional dissipation',
+                'ALLIE': 'Internal energy',
+                'ALLJD': 'Joule heat dissipation',
+                'ALLCW': 'Internal work by constraint penalty',
+                'ALLPW': 'Internal work by penalty contact',
+                'ALLKE': 'Kinetic energy',
+                'ALLKL': 'Loss of kinetic energy at impact',
+                'ALLPD': 'Plastic dissipation',
+                'ALLSD': 'Static dissipation (stabilization)',
+                'ALLSE': 'Strain energy',
+                'ETOTAL': 'Total energy',
+                'ALLVD': 'Viscous dissipation'
+            }
+            ho = read_ho(model['name'], model['path'])
+            for ho_name, ho_values in ho.items():
+                ax_name = ho_name if ho_name in axes else 'balance'
+                if ho_name == 'time':
+                    continue
+                else:
+                    ho_name = names[ho_name]
+                plot_ho(axes[ax_name], ho['time'], ho_values, ho_name)
+                axes[ax_name].legend()
+
+        if plot['Displacement']:
+            coords = read_curvatures(model['name'], model['path'])
+            plot_curvature(axes['curvature'], *coords)
+
+        if plot['Ovalization']:
+            z0, x0, z1, x1, ovalization_index = read_ovalization(model['name'], model['path'])
+            plot_ovalization(axes['ovalization'], z0, x0, z1, x1, ovalization_index)
+
+        save_figure(fig, i, models, data)
