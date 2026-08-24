@@ -3,101 +3,27 @@ sys.stdout = sys.__stdout__
 from abaqus import *
 from abaqusConstants import *
 import matplotlib.pyplot as plt
-from matplotlib.ticker import PercentFormatter
 import os
 import numpy as np
-from matplotlib.widgets import CheckButtons, TextBox
 
-from save_files import save_cpress, save_ho, save_rmc, save_copen, save_curvature, save_ovalization
-from read_files import read_cpress, read_ho, read_rmc, find_inp, read_inp, read_sta, read_copen, read_curvatures, read_ovalization
-from read_output import compute_bending, compute_tension, compute_ho, compute_copen, compute_displacement, get_ovalization
-from plot_results import plot_cpress, plot_ho, plot_km, plot_tm, plot_stiff, plot_copen, plot_copen_heatmap, plot_curvature, plot_ovalization
+from save_files import save_cpress, save_ho, save_rmc, save_curvature, save_ovalization
+from read_files import read_cpress, read_ho, read_rmc, find_inp, read_inp, read_sta, read_curvatures, read_ovalization
+from read_output import compute_bending, compute_ho, compute_displacement, get_ovalization
+from plot_results import plot_cpress, plot_ho, plot_km, plot_tm, plot_stiff, plot_curvature, plot_ovalization
 from part_dimension import get_part_dimensions
 
 models = [
-    # {'name': 'Modelo 253', 'path': r'253 - Teste-Witz-NLG', 'color': '#4daf4a', 'extract': False, 'title': 'Polymer'},
-    # {'name': 'Modelo 255', 'path': r'255 - Teste-Witz-NLG-NoTension', 'color': '#4daf4a', 'extract': True, 'title': 'NoMetallic'},
-    # {'name': 'Modelo 256', 'path': r'256 - Teste-Witz-NLG-ImplicitSolid', 'color': '#4daf4a', 'extract': False, 'title': 'LG'},
-    # {'name': 'Modelo 257', 'path': r'257 - Teste-Witz-NLG-ImplicitSolid-PredefinedField', 'color': '#4daf4a', 'extract': True, 'title': 'Predef'},
-    # {'name': 'Modelo 259', 'path': r'259 - Teste-Witz-NLG-Implicit-SurfSurf', 'color': '#4daf4a', 'extract': True, 'title': '259'},
-    # {'name': 'Modelo 261', 'path': r'261 - Teste-Witz-ImplicitExtPress', 'color': '#4daf4a', 'extract': False, 'title': r'P$_{ext}$ = 1MPa'},
-    # {'name': 'Modelo 262', 'path': r'262 - Teste-Witz-ImplicitExtIntPress', 'color': '#4daf4a', 'extract': True, 'title': r'P$_{in}$ = 15MPa'},
-    # {'name': 'Modelo 263', 'path': '263 - Teste-Witz-ImplicitExtPress-Parallel', 'color': '#4daf4a', 'extract': True, 'title': r'P$_{ext}$ = 0.5MPa'},
-    # {'name': 'Modelo 264', 'path': '264 - Teste-Witz-Explicit-K06', 'color': '#4daf4a', 'extract': True, 'title': r'K = 0.6'},
-    # {'name': 'Modelo 265', 'path': '265 - Teste-Witz-NoFabricTape', 'color': '#4daf4a', 'extract': True, 'title': r'NoFabricTape'},
-    # {'name': 'Modelo 267', 'path': r'267 - Teste-Witz-NoReducedIntegration', 'color': '#4daf4a', 'extract': True, 'title': 'S4C3D8'},
-    # {'name': 'Modelo 268', 'path': r'268 - Teste-Witz-LowerTimeStep', 'color': '#4daf4a', 'extract': True, 'title': 'LowerTS'},
-    # {'name': 'Modelo 269', 'path': r'269 - Teste-Witz-ImplicitoNaoLinear', 'color': '#4daf4a', 'extract': True, 'title': 'NLG'},
-    # {'name': 'Modelo 270', 'path': r'270 - Teste-Witz-Cruz1996', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996', 'frame': 400},
-    # {'name': 'Modelo 271', 'path': r'271 - Teste-Witz-Cruz1996-IntPressure', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996', 'frame': 150},
-    # {'name': 'Modelo 272', 'path': r'272 - Teste-Witz-Cruz1996-ExtPressure', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 249', 'path': r'249 - Teste-Witz-Padrao', 'color': '#4daf4a', 'extract': True, 'title': 'Padrao'},
-    # {'name': 'Modelo 273', 'path': r'273 - Teste-Witz-Cruz1996-ExtPressureStep', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 274', 'path': r'274 - Teste-Witz-Cruz1996-Linear-K06', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 275', 'path': r'275 - Teste-Witz-Cruz1996-Linear-K04', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 276', 'path': r'276 - Teste-Witz-Cruz1996-K04-IntExt', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 277', 'path': r'277 - Teste-Witz-Cruz1996-K04-IntExt-2Pitch', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 278', 'path': r'278 - Teste-Witz-Cruz1996-K04-IntExt-4xMesh', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 279', 'path': r'279 - Teste-Witz-Cruz1996-K04-IntExt-CilinCoords', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 280', 'path': r'280 - Teste-Witz-Cruz1996-G13', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 281', 'path': r'281 - Teste-Witz-Cruz1996-IntExt', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 282', 'path': r'282 - Teste-Witz-Cruz1996-ShellToSolid', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 283', 'path': r'283 - Teste-Witz-Cruz1996-Coupling', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 284', 'path': r'284 - Teste-Witz-Cruz1996-CouplingExtInt', 'color': '#4daf4a', 'extract': False, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 285', 'path': r'285 - Teste-Witz-Cruz1996-CouplingExtInt', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 286', 'path': r'286 - Teste-Witz-Cruz1996-Coupling-2Pitch', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 287', 'path': r'287 - Teste-Witz-Cruz1996-2Pitch', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 288', 'path': r'288 - Teste-Witz-Cruz1996-2Pitch-Linear', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 289', 'path': r'289 - Teste-Witz-Cruz1996-Linear', 'color': '#4daf4a', 'extract': True, 'title': 'Cruz1996'},
-    # {'name': 'Modelo 234', 'path': r'234 - Teste-Witz-InternalPressure', 'color': '#4daf4a', 'extract': True, 'title': ''},
-    # {'name': 'Modelo 291', 'path': r'291 - Teste-Witz-Cruz1996-CouplingExt', 'color': '#4daf4a', 'extract': True, 'title': ''},
-    # {'name': 'Modelo 292', 'path': r'292 - Teste-Witz-Cruz1996-BC', 'color': '#4daf4a', 'extract': True, 'title': ''},
-    # {'name': 'Modelo 290', 'path': r'290 - Teste-Witz-SteelTube', 'color': '#4daf4a', 'extract': False, 'title': 'Tube'},
-    # {'name': 'Modelo 293', 'path': r'293 - Teste-SteelTube-Implicit', 'color': '#4daf4a', 'extract': False, 'title': 'LG'},
-    # {'name': 'Modelo 294', 'path': r'294 - Teste-SteelTube-Implicit-NLG', 'color': '#4daf4a', 'extract': True, 'title': 'NLG'},
-    # {'name': 'Modelo 295', 'path': r'295 - Teste-SteelTube-Implicit-Int', 'color': '#4daf4a', 'extract': True, 'title': 'LG', 'frame': 200},
-    # {'name': 'Modelo 296', 'path': r'296 - Teste-SteelTube-Implicit-Int-NLG', 'color': '#4daf4a', 'extract': True, 'title': 'NLG', 'frame': 200},
-    # {'name': 'Modelo 297', 'path': r'297 - Teste-Witz-Cruz1996-4xMesh', 'color': '#4daf4a', 'extract': False, 'title': '4xMesh'},
     {'name': 'Modelo 298', 'path': r'298 - Teste-Witz-Cruz1996-ExcludeFabricTape', 'color': '#4daf4a', 'extract': True, 'title': 'NoFabricTape'},
     ]
 
-# file_path = r'1 - Cilamce\7 - Skallerud-1Pitch-Pin07MPa\3MPa-NoRecover\DHZL_2013+RK_2015-4.0_skallerud-P07.csv'
-# props = [list(), list()]
-# file_rmc = open(file_path, 'r')
-# line_list = file_rmc.readlines()
-# for line in line_list[1:]:
-#     line_props = list(map(float, line.split(';')))
-#     props[0].append(line_props[0])
-#     props[1].append(line_props[1])
-
-
-
 def figura():
     fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    # fig1, axes1 = plt.subplots(figsize=(7, 7))
     x_exp, y_exp, x_exp300, y_exp300, x_lei, y_lei, x_ska07, y_ska07, x_ska07l, y_ska07l, x_ska10, y_ska10 = literatura()
 
     x = np.linspace(0,0.12,50)
-    y = 19309.4*x
-
-    # axes1.plot(x_ska07, y_ska07, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 0.7$MPa", markerfacecolor='#ffffff')
-    # # axes1.plot(props[0], props[1], label=r"Analytical estimation")
-    # # axes1.plot(x, y, color="#000000", label=r"Analytical estimation")
-    # axes1.set_xlim(-0.15, 0.15)
-    # axes1.set_ylim(-4000, 4000)
-    # axes1.set_xlabel("Curvature (1/m)")
-    # axes1.set_ylabel("Moment (Nm)")
-    # # axes1.set_title("Relação momento-curvatura")
-    # axes1.grid()
-    # axes1.set_aspect(aspect=0.3/8000)
 
     axes[0][0].plot(x_exp, y_exp, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 0$", markerfacecolor='#ffffff')
     # axes[0][0].plot(x_exp300, y_exp300, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 30 MPa$", markerfacecolor='#ffffff')
-    # axes[0][0].plot(x_ska10, y_ska10, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 10$MPa", markerfacecolor='#ffffff')
-    # axes[0][0].plot(x_ska07, y_ska07, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 0.7$MPa", markerfacecolor='#ffffff')
-    # axes[0][0].plot(x_ska07l, y_ska07l, '-', color="#e41a1c", label=r"Wang and Yue (2021)")
-    # axes[0][0].plot(x, y, '-', color="green", label=r"19kNm²")
-    # axes[0][0].plot(x_lei, y_lei, 'o-', color="#e41a1c", label=r"Lei et al (2024)", markerfacecolor='#e41a1c')
     axes[0][0].set_xlim(-1.5, 1.5)
     axes[0][0].set_ylim(-3000, 3000)
     axes[0][0].set_xlabel("Curvatura (1/m)")
@@ -105,15 +31,6 @@ def figura():
     axes[0][0].set_title("Relação momento-curvatura")
     axes[0][0].grid()
 
-    # axes[0][1].plot(x_exp, y_exp, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 0$", markerfacecolor='#ffffff')
-    # axes[0][1].plot(x_exp300, y_exp300, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 30 MPa$", markerfacecolor='#ffffff')
-    # axes[0][1].plot(x_ska07, y_ska07, 's-', color="#4D4D4D", label=r"Experimental P$_{in} = 0.7$MPa", markerfacecolor='#ffffff')
-    # axes[0][1].plot(x_ska07l, y_ska07l, '-', color="#e41a1c", label=r"Wang and Yue (2021)")
-    # axes[0][1].plot(x, y, '-', color="green", label=r"19kNm²")
-
-    # axes[0][1].plot(x_lei, y_lei, 'o-', color="#e41a1c", label=r"Lei et al (2024)", markerfacecolor='#e41a1c')
-    # axes[0][1].set_xlim(-0.15, 0.15)
-    # axes[0][1].set_ylim(-4000, 4000)
     axes[0][1].set_xlabel("Tempo de flexão (s)")
     axes[0][1].set_ylabel(r"Rigidez (kNm$^2$)")
     axes[0][1].set_title("Rigidez à flexão")
@@ -124,15 +41,6 @@ def figura():
     axes[0][2].set_title("Carregamento vs tempo")
     axes[0][2].grid()
 
-    # axes[1][0].axhline(y=0.05, color='#e41a1c', linestyle='--', linewidth=1, label='Limite 5%')
-    # # axes[1][0].set_ylim(0, 0.2)
-    # axes[1][0].yaxis.set_major_formatter(PercentFormatter(xmax=1))
-    # axes[1][0].set_xlabel("Tempo de simulação (s)")
-    # axes[1][0].set_ylabel("Porcentagem da energia interna")
-    # axes[1][0].set_title("Parâmetros de controle")
-    # axes[1][0].grid()
-
-    # axes[1][1].set_ylim(0, 0.2)
     axes[1][0].set_xlabel("Tempo de simulação (s)")
     axes[1][0].set_ylabel("Energia (J)")
     axes[1][0].set_title(r"Balanço energético")
@@ -153,15 +61,11 @@ def figura():
     return fig, {
     'endA': axes[0][0],
     'endB': axes[0][0],
-    # 'endB': axes1,
     'stiffness': axes[0][1],
     'moment_time': axes[0][2],
-    # 'ALLAE': axes[1][0],
-    # 'ALLKE': axes[1][0],
     'balance': axes[1][0],
     'ovalization': axes[1][1],
     'curvature': axes[1][2],
-    # 'ALLFD': axes[1][2],
 }
 
 def literatura():
@@ -223,12 +127,10 @@ def load_data(model):
         'wct_total_horas': wct_total_horas,
         'restante_horas': restante_horas
     }
-    # print(data)
     return data
 
 def extract_results(model, data):
     all_ho = {}
-    all_copen = {}
     time_offset, n_rotations = 0.0, len(data['rotations'])
     odb = session.openOdb(name=data['job_name'], path=os.path.join(model['path'], f"{data['job_name']}.odb"), readOnly=True)
     for i_step, step in enumerate(data['steps'], 1):
@@ -247,12 +149,6 @@ def extract_results(model, data):
                 print(f"Erro de ho: {e}")
             load_types = {load['type'] for load in step['loads']}
 
-            # copen = compute_copen(abaqus_step)
-
-            # for key, values in copen.items():
-            #     if key not in all_copen:
-            #         all_copen[key] = []
-            #     all_copen[key].extend(values)
             if 'Rotation' in load_types:
                 for end in data['bc_sets']:
                     region = odb.rootAssembly.nodeSets[end.upper()]
@@ -268,47 +164,21 @@ def extract_results(model, data):
             save_ovalization(model['name'], model['path'], *ovalization)
     odb.close()
     save_ho(model['name'], model['path'], **all_ho)
-    # save_copen(model['name'], model['path'], **all_copen)
-
-def fig_carea():
-    fig, axes = plt.subplots(figsize=(15, 10))
-    return fig, axes
 
 fig, axes = figura()
-# fig2, axes2 = fig_carea()
 for i, model in enumerate(models):
     data = load_data(model)
-
     if model['extract']:
         extract_results(model, data)
-
-    # copen = read_copen(model['name'], model['path'])
-    # print(len(copen.keys()))
-    # plot_copen(copen, model['path'])
-    # plot_copen_heatmap(copen, model['path'])
-
     rmc = [r for r in (read_rmc(model['name'], model['path'], end)
                     for end in data['bc_sets']
                     ) if r is not None]
     for ax_name, titles, (t, k, m, _) in zip(['endA', 'endB'], [model['title'] + ' - endA', model['title'] + ' - endB'], rmc):
         plot_km(axes[ax_name], t, k, m, titles)
-
     for label, (t,k,m,s) in zip(['endA', 'endB'], rmc):
         plot_stiff(axes['stiffness'], t, k, m, s, label)
-
     if rmc:
         plot_tm(axes['moment_time'], *[r[0] for r in rmc], *[r[1] for r in rmc], *[r[2] for r in rmc], model)
-
-    # try:
-    #     cpress = read_cpress(model['name'], model['path'])
-
-    #     fig_cp, ax_cp = plt.subplots(figsize=(9,6))
-    #     plot_cpress(cpress, ax_cp, fig_cp)
-
-    #     fig_cp.savefig(rf"{model['path']}\Resultado - {model['name']} - CPress.png", dpi=400)
-    # except:
-    #     print("Sem step de pressão")
-
     names = {
         'lim': 'Limite - 5% ALLIE',
         'ALLAE': 'Artificial strain energy',
@@ -342,19 +212,13 @@ for i, model in enumerate(models):
     lines2 = []
     ho = read_ho(model['name'], model['path'])
     for ho_name, ho_values in ho.items():
-        if 'CAREA' in ho_name:
-            # line = plot_ho(axes2, ho['time'], ho_values, ho_name)
-            # lines2.append(line)
-            continue
         ax_name = ho_name if ho_name in axes else 'balance'
         if ho_name == 'time':
             continue
         else:
-            # pass
             ho_name = names[ho_name]
         plot_ho(axes[ax_name], ho['time'], ho_values, ho_name)
         axes[ax_name].legend()
-
     coords = read_curvatures(model['name'], model['path'])
     z0, x0, z1, x1, ovalization_index = read_ovalization(model['name'], model['path'])
     plot_curvature(axes['curvature'], *coords)

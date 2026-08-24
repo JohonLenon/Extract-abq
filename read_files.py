@@ -84,21 +84,6 @@ def read_ovalization(name, path):
 
     return props + [ovalization_index]
 
-def read_copen(name, path):
-    with open(fr"{path}\Copen - {name}.csv") as file_copen:
-        header = file_copen.readline().strip().split(', ')
-        lines = file_copen.readlines()
-
-    n_nodes = len(header)
-    nodes = [[] for _ in range(n_nodes)]
-
-    for line in lines:
-        for p, value in zip(nodes, map(float, line.split(', '))):
-            p.append(value)
-    
-    copen_dict = {h: p for h, p in zip(header, nodes)}
-    return copen_dict
-
 def find_inp(folder_path):
     # return str(next(Path(folder_path).glob("*.inp"), None))
     return [str(p) for p in Path(folder_path).glob("*.inp")]

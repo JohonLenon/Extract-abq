@@ -53,16 +53,6 @@ def save_ho(name, path, **ho):
         ]) + '\n')
     file_ho.close()
 
-def save_copen(name, path, **ho):
-    file_ho = open(fr"{path}\Copen - {name}.csv", 'w')
-    file_ho.write(', '.join(ho.keys()) + '\n')
-    for values in zip(*list(ho.values())):
-        file_ho.write(', '.join([
-            f'{v:.6e}'
-            for v in values
-        ]) + '\n')
-    file_ho.close()
-
 def save_curvature(name, path, **path_dict):
     file_path = open(fr"{path}\Curvatures - {name}.csv", 'w')
     file_path.write('y0_1,x0_1,y_1,x_1,y0_2,x0_2,y_2,x_2\n')

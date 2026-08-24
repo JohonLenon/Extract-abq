@@ -181,65 +181,6 @@ def plot_ovalization(ax, z0, x0, z1, x1, ov_index):
     # ax.set_aspect('equal')
     ax.legend()
 
-def plot_copen(copen_dict, save_path, open_threshold=1e-5):
-    """
-    Plota as colunas de COPEN (exceto 'time') ao longo do tempo.
-    NaN vira gap automático no gráfico (matplotlib já ignora).
-    """
-    time = copen_dict['time']
-    node_keys = [k for k in copen_dict.keys() if k != 'time']
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    for key in node_keys:
-        ax.plot(time, copen_dict[key], marker='o', markersize=2, linewidth=1, label=key)
-
-    ax.axhline(open_threshold, color='red', linestyle='--', linewidth=0.8, label='Limiar aberto/fechado')
-    ax.set_xlabel('Tempo')
-    ax.set_ylabel('COPEN')
-    ax.set_title('Abertura de contato ao longo do tempo')
-    ax.legend(fontsize=7, ncol=3)
-    fig.tight_layout()
-    fig.savefig(rf"{save_path}\COPEN.png", dpi=400)
-
-def plot_copen_heatmap(copen_dict, save_path, open_threshold=1e-5):
-    """
-    Heatmap: linha = nó, coluna = tempo, cor = aberto (1) / fechado (0) / sem dado (NaN).
-    """
-    time = copen_dict['time']
-    node_keys = [k for k in copen_dict.keys() if k != 'time']
-
-    # Monta matriz: linhas = nós, colunas = frames
-    matrix = []
-    for key in node_keys:
-        row = []
-        for value in copen_dict[key]:
-            if value != value:  # checa NaN sem precisar de math.isnan
-                row.append(np.nan)
-            else:
-                row.append(1.0 if value > open_threshold else 0.0)
-        matrix.append(row)
-
-    matrix = np.array(matrix)
-
-    fig_height = max(4, 0.15 * len(node_keys))
-    fig, ax = plt.subplots(figsize=(12, fig_height))
-
-    im = ax.imshow(matrix, aspect='auto', cmap='RdYlGn_r', interpolation='nearest',
-                    extent=[time[0], time[-1], len(node_keys), 0])
-
-    ax.set_xlabel('Tempo')
-    ax.set_ylabel('Nó')
-    ax.set_yticks(np.arange(len(node_keys)) + 0.5)
-    ax.set_yticklabels(node_keys, fontsize=6)
-    ax.set_title('Estado de contato ao longo do tempo (verde=fechado, vermelho=aberto)')
-
-    cbar = fig.colorbar(im, ax=ax, ticks=[0, 1])
-    cbar.ax.set_yticklabels(['Fechado', 'Aberto'])
-
-    fig.tight_layout()
-    fig.savefig(rf"{save_path}\COPEN-Heatmap.png", dpi=400)
-
 def plot_cpress(data, ax, fig):
     ax = ax or plt.gca()
 
