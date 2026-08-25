@@ -210,7 +210,7 @@ def plot_cpress(data, ax, fig):
     ax.grid(True, which='both', alpha=0.3)
     fig.tight_layout()
 
-def plot_figure(fig, axes, models, extract, plot):
+def plot_figure(fig, axes, models, extract, plot, historys):
     for i, model in enumerate(models):
         data = load_data(model)
         if model['extract']:
@@ -260,13 +260,14 @@ def plot_figure(fig, axes, models, extract, plot):
             }
             ho = read_ho(model['name'], model['path'])
             for ho_name, ho_values in ho.items():
-                ax_name = ho_name if ho_name in axes else 'balance'
-                if ho_name == 'time':
-                    continue
-                else:
-                    ho_name = names[ho_name]
-                plot_ho(axes[ax_name], ho['time'], ho_values, ho_name)
-                axes[ax_name].legend()
+                if not historys or ho_name in historys:
+                    ax_name = ho_name if ho_name in axes else 'balance'
+                    if ho_name == 'time':
+                        continue
+                    else:
+                        ho_name = names[ho_name]
+                    plot_ho(axes[ax_name], ho['time'], ho_values, ho_name)
+                    axes[ax_name].legend()
 
         if plot['Displacement']:
             coords = read_curvatures(model['name'], model['path'])
